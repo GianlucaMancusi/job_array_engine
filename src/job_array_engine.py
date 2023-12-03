@@ -5,7 +5,6 @@ The bash script will launch a python script with different parameters.
 The parameters are specified in the set_grid_params method.
 """
 
-import itertools
 import math
 import os
 import subprocess
