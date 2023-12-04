@@ -38,6 +38,7 @@ launcher = GridSearchLauncher(
     cpu_per_task=2,
     per_job=1, # Number of commands to run in parallel in a single job
     exclude_nodes=['node1', 'node2'], # List of nodes to exclude
+    env_vars={'WANDB__SERVICE_WAIT': 300}
 )
 launcher.set_grid_params(
     static_params="--arg1 val1 --arg2 val2",
