@@ -56,4 +56,4 @@ launcher.run_grid_search()
 
 
 ## Acknowledgements
-This package was created by Gianluca Mancusi, from a codebase made by Aniello Panariello. University of Modena and Reggio Emilia.
+This package was created by [Gianluca Mancusi](https://github.com/GianlucaMancusi) from a codebase made by [Aniello Panariello](https://github.com/apanariello4/). University of Modena and Reggio Emilia.
