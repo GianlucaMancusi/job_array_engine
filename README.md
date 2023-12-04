@@ -8,7 +8,7 @@
 
 `job_array_engine` is a Python package that allows you to run a grid search on a cluster using SLURM. 
 
-**Special ability**: it can run multiple "jobs" in parallel on a single "job". Parameter: --per_job [int].
+**Special ability**: it can fit *multiple grid search instances* in *one job*. Parameter: `--per_job [int]`.
 
 It is tailored to work with the [AIMAGELAB](https://aimagelab.ing.unimore.it/) cluster, but it can be easily adapted to work with other clusters.
 
@@ -36,7 +36,7 @@ launcher = GridSearchLauncher(
     mem=32,
     tot_time="00:30:00",
     cpu_per_task=2,
-    per_job=1, # Number of jobs to run in parallel in a single node
+    per_job=1, # Number of commands to run in parallel in a single job
     exclude_nodes=['node1', 'node2'], # List of nodes to exclude
 )
 launcher.set_grid_params(
@@ -56,4 +56,4 @@ launcher.run_grid_search()
 
 
 ## Acknowledgements
-This package was created by Gianluca Mancusi, from a codebase made by Aniello Panariello. University of Modena and Reggio Emilia.
+This package was created by [Gianluca Mancusi](https://github.com/GianlucaMancusi) from a codebase made by [Aniello Panariello](https://github.com/apanariello4/). University of Modena and Reggio Emilia.
