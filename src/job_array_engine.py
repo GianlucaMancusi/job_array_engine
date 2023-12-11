@@ -13,6 +13,7 @@ import uuid
 
 from pathlib import Path
 
+
 class GridSearchLauncher:
     """
     # `GridSearchLauncher` class
@@ -106,6 +107,22 @@ class GridSearchLauncher:
         self.flags = ['']
         self.set_grid_params()
 
+    def set_grid_params(self, static_params=None, grid_params=None, flags=None):
+        """
+        Set the grid search parameters
+        :param static_params: string of static parameters (not to be grid-searched)
+        :param grid_params: dictionary of parameters to grid-search (key=param_name, value=list_of_values)
+        :param flags: list of flags to add to each job
+        """
+        self.static_params = static_params if static_params is not None else ''
+        self.grid_params = grid_params if grid_params is not None else {}
+        self.flags = flags if flags is not None else ['']
+
+    def _generate_permutations(self):
+        keys = list(self.grid_params.keys())
+        values = list(self.grid_params.values())
+        return [dict(zip(keys, v)) for v in itertools.product(*values)]
+
     def generate_sbatch_script(self):
         conf_list = [' '.join(f"{key} {value}" for key, value in config.items()) for config in self._generate_permutations()]
         conf_list = [f"{string} {flag}".strip() for string in conf_list for flag in self.flags]
@@ -127,7 +144,7 @@ class GridSearchLauncher:
 
         env_vars = "\n".join(f"export {key}={value}" for key, value in self.env_vars.items())
 
-        recap= f"###>Recap: n_gpus={self.n_gpus}, mem={self.mem}G, time={self.tot_time}, env={self.env_name}, num_jobs={math.ceil(num_jobs/self.per_job)}"
+        recap = f"###>Recap: n_gpus={self.n_gpus}, mem={self.mem}G, time={self.tot_time}, env={self.env_name}, num_jobs={math.ceil(num_jobs/self.per_job)}"
 
         output_sbatch = f"""#!/bin/bash
 {recap}
@@ -177,8 +194,7 @@ arguments=(
             os.system(f"sbatch {sbatch_file}")
 
 
-
-if __name__ == "__main__":  
+if __name__ == "__main__":
     launcher = GridSearchLauncher(
         job_name="JOB_NAME",
         n_gpus=1,
@@ -190,8 +206,8 @@ if __name__ == "__main__":
         mem=32,
         tot_time="00:30:00",
         cpu_per_task=2,
-        per_job=1, # Number of jobs to run in parallel in a single node
-        exclude_nodes=['node1', 'node2'], # List of nodes to exclude
+        per_job=1,  # Number of jobs to run in parallel in a single node
+        exclude_nodes=['node1', 'node2'],  # List of nodes to exclude
         env_vars={'WANDB__SERVICE_WAIT': 300}
     )
     launcher.set_grid_params(
@@ -200,7 +216,7 @@ if __name__ == "__main__":
             "--arg3": ["val3", "val4"],
             "--arg4": [1, 2, 3],
         },
-        flags=["--flag1", "--flag2"] # grid search on flags (optional)
+        flags=["--flag1", "--flag2"]  # grid search on flags (optional)
     )
     launcher.generate_sbatch_script()
     launcher.run_grid_search()
