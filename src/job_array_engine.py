@@ -163,7 +163,6 @@ class GridSearchLauncher:
 cd {self.project_path.resolve()}
 export PYTHONPATH={self.project_path.resolve()}
 
-export WANDB__SERVICE_WAIT=300
 {env_vars}
 
 arguments=(
