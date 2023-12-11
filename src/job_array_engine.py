@@ -12,6 +12,7 @@ import time
 import uuid
 
 from pathlib import Path
+import itertools
 
 
 class GridSearchLauncher:
@@ -36,7 +37,8 @@ class GridSearchLauncher:
     - `cpu_per_task` (int, optional): The number of CPUs per task. Defaults to 2.
     - `per_job` (int, optional): The number of jobs to run in parallel in a single node. Defaults to 1.
     - `exclude_nodes` (list, optional): The list of nodes to exclude. Defaults to None.
-    - `partition` (str, optional): The partition name. Defaults to "prod".
+    - `partition` (str, optional): The partition name. Defaults is None.
+    - `account` (str, optional): The account name. Defaults is None.
     - `use_conda` (bool, optional): Whether to use conda. Defaults to True.
     - `env_vars` (dict, optional): The environment variables. Defaults to None.
 
@@ -83,7 +85,8 @@ class GridSearchLauncher:
         cpu_per_task=2,
         per_job=1,
         exclude_nodes=None,
-        partition="prod",
+        partition=None,
+        account=None,
         use_conda=True,
         env_vars=None,
     ):
@@ -99,6 +102,7 @@ class GridSearchLauncher:
         self.per_job = per_job
         self.exclude_nodes = exclude_nodes or []
         self.partition = partition
+        self.account = account
         self.use_conda = use_conda
         self.env_vars = env_vars or {}
         self.random_uuid = str(uuid.uuid4())[:4]
@@ -135,7 +139,7 @@ class GridSearchLauncher:
         arguments = "\n".join(f"'{srun_}python -u {self.python_file} {self.static_params} {config}'" for config in conf_list)
 
         job_string = "sleep $(($RANDOM % 20)); ${arguments[$SLURM_ARRAY_TASK_ID]}" if self.per_job == 1 else \
-            ' &\nsleep 60s; '.join(f"${{arguments[$(($SLURM_ARRAY_TASK_ID * {self.per_job} + {i}))]}}" for i in range(self.per_job)) + ' &\nwait\n'
+            ' &\nsleep 10s; '.join(f"${{arguments[$(($SLURM_ARRAY_TASK_ID * {self.per_job} + {i}))]}}" for i in range(self.per_job)) + ' &\nwait\n'
 
         env = f"\n. /usr/local/anaconda3/etc/profile.d/conda.sh\nconda activate {self.env_name}\n" if self.env_name and self.use_conda else \
               f"source activate {self.env_name}" if self.env_name else ''
@@ -144,11 +148,12 @@ class GridSearchLauncher:
 
         env_vars = "\n".join(f"export {key}={value}" for key, value in self.env_vars.items())
 
-        recap = f"###>Recap: n_gpus={self.n_gpus}, mem={self.mem}G, time={self.tot_time}, env={self.env_name}, num_jobs={math.ceil(num_jobs/self.per_job)}"
+        recap = f"###>Recap: n_gpus={self.n_gpus}, mem={self.mem}G, time={self.tot_time}, env={self.env_name}, num_jobs={num_jobs}"
 
         output_sbatch = f"""#!/bin/bash
 {recap}
-#SBATCH -p {self.partition}
+{f'#SBATCH -p {self.partition}' if self.partition else ''}
+{f'#SBATCH -A {self.account}' if self.account else ''}
 #SBATCH --job-name={self.job_name}
 #SBATCH --nodes=1
 {job_array}
@@ -161,8 +166,7 @@ class GridSearchLauncher:
 {exclude_nodes_str}
 {env}
 cd {self.project_path.resolve()}
-export PYTHONPATH={self.project_path.resolve()}
-
+export PYTHONPATH="{self.project_path.resolve()}"
 {env_vars}
 
 arguments=(
